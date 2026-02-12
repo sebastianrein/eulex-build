@@ -1,0 +1,27 @@
+metadata:
+  project_name: "EU Climate Dataset"
+  author: "Jane Smith"
+  description: "Dataset of EU regulations related to climate in December 2023"
+  date_created: 2024-03-20
+  version: "3.1"
+
+data:
+  mode: descriptive
+  document_types:
+    - regulation
+  start_date: 2023-12-01
+  end_date: 2023-12-31
+  filter_keywords:
+    - climate
+
+processing:
+  enable_parallel_processing: true
+  text_extraction:
+    include_recitals: false
+    include_articles: true
+    include_annexes: false
+
+output:
+  formats:
+    - parquet
+  output_directory: "./descriptive_output"

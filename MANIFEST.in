@@ -1,0 +1,7 @@
+include README.md
+include LICENSE
+include requirements.txt
+include configuration.yaml
+recursive-include src *.py
+recursive-include tests *.py
+recursive-include tests *.yaml

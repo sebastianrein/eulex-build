@@ -1,0 +1,5 @@
+metadata:
+  project_name: "Test Dataset"
+data:
+  mode: descriptive
+  end_date: 2023-12-31

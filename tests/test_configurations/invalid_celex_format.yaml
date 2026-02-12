@@ -1,0 +1,11 @@
+data:
+  mode: fixed
+  celex_ids:
+    - "32024R1689"      # Valid example
+    - "A2024R1689"      # Invalid - first char must be 0-9, C, or E (not A)
+    - "3202R1689"       # Invalid - second part needs exactly 4 digits (only 3)
+    - "32024r1689"      # Invalid - middle part must be uppercase A-Z (lowercase r)
+    - "320241689"       # Invalid - missing middle letter part entirely
+    - "32024ABCD1689"   # Invalid - middle part can only be 1-3 letters (has 4)
+    - "32024R168"       # Invalid - last part needs 4-6 digits (only 3)
+    - "32024R1689999"   # Invalid - last part can only be 4-6 digits (has 7)

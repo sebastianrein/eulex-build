@@ -1,0 +1,30 @@
+metadata:
+  project_name: "EU Legal Acts Analysis Dataset"
+  author: "John Doe"
+  description: "A comprehensive dataset of EU regulations and directives for legal analysis"
+  date_created: 2024-01-15
+  version: "2.0"
+
+data:
+  mode: fixed
+  celex_ids:
+    - "32024R1689"
+    - "32008R0765"
+    - "32019L0790"
+    - "32016R0679"
+    - "32022R2065"
+    - "32024D01459"
+
+processing:
+  enable_parallel_processing: true
+  max_threads: 15
+  text_extraction:
+    include_recitals: true
+    include_articles: true
+    include_annexes: true
+
+output:
+  formats:
+    - csv
+    - parquet
+  output_directory: "./custom_output"

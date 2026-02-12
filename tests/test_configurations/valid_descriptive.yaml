@@ -1,0 +1,32 @@
+metadata:
+  project_name: "EU Climate and Digital Policy Dataset"
+  author: "Jane Smith"
+  description: "Dataset of EU regulations and directives related to climate and digital policies from 2020-2023"
+  date_created: 2024-03-20
+  version: "3.1"
+
+data:
+  mode: descriptive
+  document_types:
+    - directive
+    - regulation
+  start_date: 2020-01-01
+  end_date: 2023-12-31
+  filter_keywords:
+    - climate
+    - digital
+    - environment
+    - cybersecurity
+
+processing:
+  enable_parallel_processing: false
+  max_threads: 1
+  text_extraction:
+    include_recitals: true
+    include_articles: true
+    include_annexes: true
+
+output:
+  formats:
+    - parquet
+  output_directory: "./descriptive_output"

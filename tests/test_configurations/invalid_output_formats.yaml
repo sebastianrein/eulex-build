@@ -1,0 +1,10 @@
+metadata:
+  project_name: "Test Dataset"
+data:
+  mode: fixed
+  celex_ids:
+    - "32024R1689"
+output:
+  formats:
+    - json
+    - xml

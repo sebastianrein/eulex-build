@@ -1,0 +1,46 @@
+# ===========================================================
+# EULEX-BUILD CONFIGURATION FILE
+# Example of available configuration options with test input.
+# ===========================================================
+
+metadata:
+  project_name: "EU Digital Regulation Dataset"
+  author: "Sebastian Rein"
+  description: "Dataset on EU legislative acts related to technology, data, and AI between 2010–2025."
+  date_created: 2025-10-22
+  version: "1.0"
+
+data:
+  mode: "descriptive"
+  document_types:
+    - "regulation"
+    - "directive"
+    - "decision"
+  start_date: 2010-01-01
+  end_date: 2025-12-31
+  filter_keywords:
+    - "digital"
+    - "artificial intelligence"
+    - "cybersecurity"
+    - "data governance"
+  include_corrigenda: true
+  include_consolidated_texts: true
+  include_national_transpositions: true
+
+processing:
+  enable_parallel_processing: true
+  automated_mode: false
+  text_extraction:
+    include_recitals: true
+    include_articles: true
+    include_annexes: false
+  relations_extraction:
+    include_relations: true
+    include_original_act_relations_for_consolidated_texts: false
+
+output:
+  include_raw_full_text: false
+  formats:
+    - "csv"
+    - "parquet"
+  output_directory: "./output"

@@ -1,0 +1,6 @@
+metadata:
+  project_name: "Test Dataset"
+data:
+  mode: invalid_mode
+  celex_ids:
+    - "32024R1689"

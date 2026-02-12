@@ -1,0 +1,9 @@
+pydantic>=2.0.0
+pyyaml>=6.0.0
+sparqlwrapper>=2.0.0
+requests>=2.31.0
+urllib3>=2.6.3
+lxml>=4.9.0
+sqlalchemy>=2.0.0
+pyarrow>=10.0.0
+tqdm>=4.60.0

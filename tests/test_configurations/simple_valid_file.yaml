@@ -1,0 +1,9 @@
+metadata:
+  project_name: "Simple Valid Dataset"
+
+data:
+  mode: "fixed"
+  celex_ids:
+    - "32024R1689"
+    - "32008R0765"
+    - "32019L0790"

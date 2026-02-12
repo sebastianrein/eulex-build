@@ -1,0 +1,70 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "eulexbuild"
+version = "0.2.0"
+description = "A Python Pipeline for Building Research-Ready Datasets from EU Legislation"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+authors = [
+    { name = "Sebastian Rein" }
+]
+keywords = ["eu-law", "eur-lex", "legal-research", "data-pipeline", "legislation", "sparql", "open-data"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Legal Industry",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+    "Topic :: Text Processing :: Linguistic",
+    "Topic :: Utilities",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+]
+dependencies = [
+    "pydantic>=2.0.0",
+    "pyyaml>=6.0.0",
+    "sparqlwrapper>=2.0.0",
+    "requests>=2.31.0",
+    "urllib3>=2.6.3",
+    "lxml>=4.9.0",
+    "sqlalchemy>=2.0.0",
+    "tqdm>=4.60.0",
+    "pyarrow>=10.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "pandas>=2.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/sebastianrein/eulex-build"
+Documentation = "https://github.com/sebastianrein/eulex-build/-/blob/main/README.md"
+Repository = "https://github.com/sebastianrein/eulex-build"
+Issues = "https://github.com/sebastianrein/eulex-build/-/issues"
+
+[project.scripts]
+eulexbuild = "eulexbuild.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+eulexbuild = ["py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --strict-markers"

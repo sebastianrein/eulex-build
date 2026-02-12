@@ -1,0 +1,8 @@
+data:
+  mode: "fixed"
+  celex_ids:
+    - "32024R1689"
+    - "32008R0765"
+  procedure_numbers:
+    - "2023/0202(COD)"
+    - "2023/0323/COD"
