@@ -1,4 +1,5 @@
 import logging
+import multiprocessing
 import sys
 import time
 from datetime import datetime
@@ -116,7 +117,7 @@ class EULEXBuildPipeline:
         file_handler.setFormatter(file_formatter)
 
         # Queue for Multiprocessing logging
-        self.log_queue = Queue()
+        self.log_queue = multiprocessing.Manager().Queue()
         self.log_listener = QueueListener(self.log_queue, file_handler, respect_handler_level=True)
         self.log_listener.start()
 
@@ -192,8 +193,8 @@ class EULEXBuildPipeline:
             else:
                 raise ValueError(f"Unknown mode: {self.config.data.mode}")
 
-            # Total = #CelexIDs + (Output-Formats * 3) + Readme export
-            total = len(celex_ids) + (len(self.config.output.formats) * 3) + 1
+            # Total = #CelexIDs + 3 export steps (works, text_units, relations) + Readme export
+            total = len(celex_ids) + 3 + 1
             with tqdm(total=total, unit="step", desc="Pipeline Progress") as pbar, logging_redirect_tqdm(
                     loggers=[self.logger]):
 
@@ -429,59 +430,42 @@ class EULEXBuildPipeline:
         self.logger.debug(f"Total batches saved: {batch_count}")
 
     def _export_results(self, pbar: tqdm = None) -> None:
-        self.logger.info(
-            f"Exporting data in {len(self.config.output.formats)} format(s): {', '.join(self.config.output.formats)}")
+        formats_str = ', '.join([f.upper() for f in self.config.output.formats])
+        self.logger.info(f"Exporting data to {len(self.config.output.formats)} format(s): {formats_str}")
 
-        for fmt in self.config.output.formats:
-            try:
-                self.logger.info(f"Exporting to {fmt.upper()} format...")
+        try:
+            # Export works
+            self.logger.debug(f"Exporting works to {formats_str}")
+            self.store.export_works(
+                self.output_dir,
+                self.config.output.formats,
+                include_raw_full_text=self.config.output.include_raw_full_text
+            )
+            pbar.update() if pbar else None
 
-                if fmt == "csv":
-                    works_path = self.output_dir / "works.csv"
-                    text_units_path = self.output_dir / "text_units.csv"
-                    relations_path = self.output_dir / "relations.csv"
+            # Export text units
+            self.logger.debug(f"Exporting text units to {formats_str}")
+            self.store.export_text_units(
+                self.output_dir,
+                self.config.output.formats
+            )
+            pbar.update() if pbar else None
 
-                    self.logger.debug(f"Exporting works to {works_path}")
-                    self.store.export_works_to_csv(works_path,
-                                                   include_raw_full_text=self.config.output.include_raw_full_text)
-                    pbar.update() if pbar else None
+            # Export relations
+            self.logger.debug(f"Exporting relations to {formats_str}")
+            self.store.export_relations(
+                self.output_dir,
+                self.config.output.formats
+            )
+            pbar.update() if pbar else None
 
-                    self.logger.debug(f"Exporting text units to {text_units_path}")
-                    self.store.export_text_units_to_csv(text_units_path)
-                    pbar.update() if pbar else None
+            self.logger.info("All exports completed successfully")
 
-                    self.logger.debug(f"Exporting relations to {relations_path}")
-                    self.store.export_relations_to_csv(relations_path)
-                    pbar.update() if pbar else None
+        except Exception as e:
+            self.logger.error(f"Failed to export data: {e}")
+            self.logger.exception(f"Traceback for export:")
+            raise
 
-                    self.logger.debug(f"CSV export completed: {works_path.parent}")
-
-                elif fmt == "parquet":
-                    works_path = self.output_dir / "works.parquet"
-                    text_units_path = self.output_dir / "text_units.parquet"
-                    relations_path = self.output_dir / "relations.parquet"
-
-                    self.logger.debug(f"Exporting works to {works_path}")
-                    self.store.export_works_to_parquet(works_path,
-                                                       include_raw_full_text=self.config.output.include_raw_full_text)
-                    pbar.update() if pbar else None
-
-                    self.logger.debug(f"Exporting text units to {text_units_path}")
-                    self.store.export_text_units_to_parquet(text_units_path)
-                    pbar.update() if pbar else None
-
-                    self.logger.debug(f"Exporting relations to {relations_path}")
-                    self.store.export_relations_to_parquet(relations_path)
-                    pbar.update() if pbar else None
-
-                    self.logger.debug(f"Parquet export completed: {works_path.parent}")
-
-            except Exception as e:
-                self.logger.error(f"Failed to export to {fmt.upper()} format: {e}")
-                self.logger.exception(f"Traceback for {fmt} export:")
-                raise
-
-        self.logger.info("All exports completed successfully")
 
     def _export_readme(self) -> None:
         """Export a comprehensive README file explaining the pipeline output."""
