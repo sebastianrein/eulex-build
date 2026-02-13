@@ -410,6 +410,9 @@ output/
 EUR-Lex. This is useful for custom text extraction, preserving document formatting, or performing advanced analysis that
 requires the original document structure. The field may be `null` if the HTML could not be retrieved.
 
+**Note:** The `date_adopted` field is automatically normalized to `YYYY-MM-DD` format. For consolidated CELEX IDs, the
+date of the original act is used.
+
 #### Text Units Table
 
 | Column     | Type    | Description           | Example                                |

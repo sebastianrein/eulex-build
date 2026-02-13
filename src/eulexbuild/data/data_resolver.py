@@ -71,7 +71,9 @@ class DataResolver:
 
     def __init__(self, celex_id: str, logger: logging.Logger = logging.getLogger()):
         self.celex_id: str = celex_id
+        self._original_celex = None
         self.logger: logging.Logger = logger
+        self._original_data_resolver_for_consolidated = None
         self._raw_full_text_xhtml = None
         self._raw_full_text_plain_html = None
         self._expression_metadata_xml = None
@@ -105,6 +107,23 @@ class DataResolver:
         if self._sparql_query_results is None:
             self._sparql_query_results = get_all_properties(self.celex_id, logger=self.logger)
         return self._sparql_query_results
+
+    @property
+    def original_celex(self):
+        if self._original_celex is None:
+            if is_consolidated_celex(self.celex_id):
+                self._original_celex = convert_consolidated_celex_to_original(self.celex_id)
+            else:
+                self._original_celex = self.celex_id
+        return self._original_celex
+
+    def get_original_data_resolver_for_consolidated(self) -> DataResolver:
+        if is_consolidated_celex(self.celex_id):
+            if self._original_data_resolver_for_consolidated is None:
+                self._original_data_resolver_for_consolidated = DataResolver(self.original_celex, logger=self.logger)
+            return self._original_data_resolver_for_consolidated
+        else:
+            return self
 
     def get_full_text_html(self) -> str | None:
         """Get the full text HTML as a string."""
@@ -198,9 +217,14 @@ class DataResolver:
             return "Unknown"
 
     def get_date_adopted(self) -> datetime.date | None:
+        if is_consolidated_celex(self.celex_id):
+            resolver = self.get_original_data_resolver_for_consolidated()
+        else:
+            resolver = self
+
         # Primary source: SPARQL query
         try:
-            date_adopted = self.sparql_query_result["date"]
+            date_adopted = resolver.sparql_query_result["date"]
             if date_adopted:
                 self.logger.debug(f"Date adopted retrieved from SPARQL for {self.celex_id}")
                 if isinstance(date_adopted, datetime.date):
@@ -211,7 +235,7 @@ class DataResolver:
 
         # Fallback 1: Extract from metadata XML
         try:
-            date = self.expression_metadata_xml.find(".//WORK/DATE_DOCUMENT")
+            date = resolver.expression_metadata_xml.find(".//WORK/DATE_DOCUMENT")
             date_adopted = datetime.date(int(date.findtext("YEAR")), int(date.findtext("MONTH")),
                                          int(date.findtext("DAY")))
             if date_adopted:
@@ -680,9 +704,8 @@ class DataResolver:
 
         recitals_tree = tree
         if include_recitals and is_consolidated_celex(self.celex_id):
-            original_celex = convert_consolidated_celex_to_original(self.celex_id)
-            self.logger.debug(f"Consolidated CELEX detected, using original CELEX {original_celex} for recitals")
-            recitals_data_resolver = DataResolver(celex_id=original_celex, logger=self.logger)
+            self.logger.debug(f"Consolidated CELEX detected, using original CELEX {self.original_celex} for recitals")
+            recitals_data_resolver = self.get_original_data_resolver_for_consolidated()
 
             try:
                 recitals_tree = etree.fromstring(recitals_data_resolver.raw_full_text_xhtml)
@@ -803,23 +826,14 @@ class DataResolver:
             if include_original_act_relations_for_consolidated_texts and is_consolidated_celex(self.celex_id):
                 self.logger.debug(
                     f"Document {self.celex_id} is a consolidated text, checking for original act relations")
-                original_celex = convert_consolidated_celex_to_original(self.celex_id)
-                self.logger.debug(f"Fetching relations for original act {original_celex}")
+                self.logger.debug(f"Fetching relations for original act {self.original_celex}")
 
                 try:
-                    original_relations = get_all_properties(original_celex, logger=self.logger)
-                    for relation_type in original_relations["relations"]:
-                        self.logger.debug(
-                            f"Found {len(original_relations['relations'][relation_type])} {relation_type} relations for original act {original_celex}")
-                        for target in original_relations["relations"][relation_type]:
-                            if target:
-                                relations.append({
-                                    "celex_source": self.celex_id,
-                                    "celex_target": target,
-                                    "relation_type": relation_type
-                                })
+                    original_data_resolver = self.get_original_data_resolver_for_consolidated()
+                    original_relations = original_data_resolver.get_relations()
+                    relations.extend(original_relations)
                 except Exception as e:
-                    self.logger.warning(f"Failed to extract original act relations for {original_celex}: {e}")
+                    self.logger.warning(f"Failed to extract original act relations for {self.original_celex}: {e}")
 
         except Exception as e:
             self.logger.warning(f"Failed to extract relations for {self.celex_id}: {e}")
