@@ -291,8 +291,8 @@ class EULEXBuildPipeline:
 
         reviewed_labels = set(
             uri
-            for label_dict in reviewed.get('labels', {}).values()
-            for uri in label_dict.keys()
+            for label_dict in reviewed.get('labels', {}).values() if label_dict
+            for uri in label_dict.keys() if uri
         )
         self.logger.info(
             f"Loaded {len(reviewed_labels)} reviewed EuroVoc labels")
@@ -552,11 +552,14 @@ class EULEXBuildPipeline:
                                     f.write(f"**{keyword}:**\n")
                                     concepts = labels[keyword]
                                     # Show first 5 concepts as preview
-                                    for i, (label, uri) in enumerate(list(concepts.items())[:5], 1):
-                                        f.write(f"- {label} (`{uri}`)\n")
-                                    if len(concepts) > 5:
-                                        f.write(f"- *...and {len(concepts) - 5} more concepts*\n")
-                                    f.write("\n")
+                                    if concepts:
+                                        for i, (label, uri) in enumerate(list(concepts.items())[:5], 1):
+                                            f.write(f"- {label} (`{uri}`)\n")
+                                        if len(concepts) > 5:
+                                            f.write(f"- *...and {len(concepts) - 5} more concepts*\n")
+                                        f.write("\n")
+                                    else:
+                                        f.write(f"- *No concepts included for `{keyword}`*\n\n")
 
                 # Dataset statistics
                 f.write("### Dataset Statistics\n\n")
