@@ -14,10 +14,9 @@ research, network analysis, natural language processing, and policy studies.
 - **📄 Comprehensive Text Extraction**: Extract structured text from recitals, articles, and annexes
 - **🔗 Relationship Mapping**: Automatically capture citations, amendments, repeals, and other inter-document
   relationships
-- **⚡ Parallel Processing**: Efficient multi-threaded processing for large-scale datasets
 - **📊 Multiple Export Formats**: Export to CSV, Parquet, and SQLite for seamless integration with your analysis workflow
 - **🔍 EuroVoc Integration**: Filter documents by policy domain using EU's multilingual thesaurus
-- **📝 Detailed Documentation**: Auto-generated README files explain your dataset structure and provenance
+- **📝 Detailed Documentation**: Logging files explain your dataset structure and provenance
 
 ## Installation
 
@@ -83,7 +82,7 @@ output:
 
 ### 2. Run the Pipeline
 
-#### Option A: Using Python code**
+#### Option A: Using Python code
 
 ```python
 from eulexbuild import EULEXBuildPipeline
@@ -93,7 +92,7 @@ pipeline = EULEXBuildPipeline("configuration.yaml")
 pipeline.run()
 ```
 
-#### Option B: Using the command-line interface (CLI)**
+#### Option B: Using the command-line interface (CLI)
 
 ```bash
 eulexbuild run configuration.yaml
@@ -218,40 +217,11 @@ EULEX-BUILD supports two modes for selecting documents:
 
 #### Fixed Mode
 
-Specify exact documents for your dataset using CELEX IDs and/or procedure numbers. At least one entry is required (
-either CELEX IDs or procedure numbers).
-
-##### Using CELEX IDs
-
-```yaml
-data:
-  mode: "fixed"
-  celex_ids:
-    - "32016R0679"  # GDPR
-    - "31995L0046"  # Data Protection Directive
-    - "32022R2065"  # Digital Services Act
-```
-
-##### Using Procedure Numbers
-
-You can also specify documents by their legislative procedure numbers. The pipeline will automatically resolve these to
-the corresponding CELEX IDs:
-
-```yaml
-data:
-  mode: "fixed"
-  procedure_numbers:
-    - "2023/0202(COD)"  # Additional procedural rules to GDPR (Adopted)
-    - "2023/0323/COD"  # Compating Late Payment Regulation (Proposed)
-```
-
-**How it works:** The pipeline queries EUR-Lex to find documents associated with each procedure number. If an adopted
-legal act exists (e.g., a regulation or directive), it uses that. If only a proposal exists, it uses the proposal
-document.
-
-##### Combining Both
-
-You can mix CELEX IDs and procedure numbers in the same configuration:
+Specify exact documents for your dataset using CELEX IDs and/or procedure numbers. 
+At least one entry is required (either CELEX IDs or procedure numbers).
+The pipeline queries EUR-Lex to find documents associated with each procedure number. 
+If an adopted legal act exists (e.g., a regulation or directive), it uses that. 
+If only a proposal exists, it uses the proposal document.
 
 ```yaml
 data:
@@ -264,25 +234,6 @@ data:
 ```
 
 **Required fields:** `mode`, and at least one of `celex_ids` or `procedure_numbers`  
-**Optional fields:** Either `celex_ids` or `procedure_numbers` (or both)
-
-**Minimal working example:**
-
-```yaml
-data:
-  mode: "fixed"
-  celex_ids:
-    - "32016R0679"
-```
-
-**Or using procedure numbers:**
-
-```yaml
-data:
-  mode: "fixed"
-  procedure_numbers:
-    - "2023/0202(COD)"
-```
 
 #### Descriptive Mode
 
@@ -310,14 +261,6 @@ data:
 **Optional fields:** `document_types`, `filter_keywords`, `include_corrigenda`, `include_consolidated_texts`,
 `include_national_transpositions`
 
-##### Minimal working example:
-
-```yaml
-data:
-  mode: "descriptive"
-  start_date: 2020-01-01
-  end_date: 2023-12-31
-```
 
 When using `filter_keywords`, the pipeline will:
 
@@ -326,19 +269,17 @@ When using `filter_keywords`, the pipeline will:
 3. Pause execution so you can refine the keyword mapping (unless `automated_mode` is enabled)
 4. Use reviewed keywords to query EUR-Lex for matching documents
 
-##### Automated Mode for CI/CD Pipelines:
+##### Automated Mode:
 
 By default, when using `filter_keywords` in descriptive mode, the pipeline pauses for interactive review of EuroVoc
 labels.
-For automated environments (CI/CD pipelines, scheduled jobs), set `automated_mode: true`:
+To skip, set `automated_mode: true`.
+The labels are still saved to `eurovoc_labels.yaml` for record-keeping and audit purposes.
 
 ```yaml
 processing:
   automated_mode: true  # Skip interactive EuroVoc review
 ```
-
-When enabled, the pipeline automatically uses all fetched EuroVoc labels without waiting for user input. The labels are
-still saved to `eurovoc_labels.yaml` for record-keeping and audit purposes.
 
 ### Processing Options
 
@@ -433,147 +374,6 @@ date of the original act is used.
 | `celex_target`  | string  | Referenced document  | `31995L0046`                             |
 | `relation_type` | string  | Type of relationship | `amends`, `repeals`, `based_on`, `cites` |
 
-## Example Use Cases
-
-### 1. Text Analysis of Environmental Regulations
-
-```python
-import pandas as pd
-
-# Load dataset
-text_units = pd.read_parquet("output/text_units.parquet")
-works = pd.read_parquet("output/works.parquet")
-
-# Filter for environmental regulations
-env_regs = works[works['document_type'] == 'regulation']
-env_text = text_units[text_units['celex_id'].isin(env_regs['celex_id'])]
-
-# Analyze recitals for policy rationale
-recitals = env_text[env_text['type'] == 'recital']
-print(f"Extracted {len(recitals)} recitals from {len(env_regs)} regulations")
-```
-
-### 2. Citation Network Analysis
-
-```python
-import pandas as pd
-import networkx as nx
-
-# Load relations
-relations = pd.read_parquet("output/relations.parquet")
-
-# Build citation network
-G = nx.DiGraph()
-for _, row in relations.iterrows():
-    G.add_edge(row['celex_source'], row['celex_target'],
-               relation=row['relation_type'])
-
-# Find most cited documents
-pagerank = nx.pagerank(G)
-top_cited = sorted(pagerank.items(), key=lambda x: x[1], reverse=True)[:10]
-print("Most influential documents:", top_cited)
-```
-
-### 3. Time-Series Analysis
-
-```python
-import pandas as pd
-import matplotlib.pyplot as plt
-
-# Load works
-works = pd.read_parquet("output/works.parquet")
-works['date_adopted'] = pd.to_datetime(works['date_adopted'])
-works['year'] = works['date_adopted'].dt.year
-
-# Documents per year by type
-yearly = works.groupby(['year', 'document_type']).size().unstack(fill_value=0)
-yearly.plot(kind='bar', stacked=True)
-plt.title("EU Legislation Over Time")
-plt.xlabel("Year")
-plt.ylabel("Number of Documents")
-plt.show()
-```
-
-## Advanced Features
-
-### EuroVoc Integration
-
-When using descriptive mode with keywords, EULEX-BUILD leverages EuroVoc—the EU's multilingual, multidisciplinary
-thesaurus covering all policy areas.
-
-#### Workflow:
-
-1. Pipeline queries EuroVoc SPARQL endpoint for concepts matching your keywords
-2. Results saved to `eurovoc_labels.yaml` for review: Per URI (Unique Resource Identifier) there can be multiple labels
-   matching your keywords.
-3. You can add/remove/refine concepts before proceeding by editing the URI of the label.
-4. Final concept URIs are used to filter EUR-Lex documents.
-
-#### Example eurovoc_labels.yaml:
-
-```yaml
-labels:
-  climate:
-    http://eurovoc.europa.eu/434664:
-      - Intergovernmental Panel on Climate Change
-    http://eurovoc.europa.eu/c_a4094c9b:
-      - Paris Agreement on Climate Change
-    http://eurovoc.europa.eu/434056:
-      - UN Framework Convention on Climate Change
-      - United Nations Framework Convention on Climate Change
-      - Convention on Climate Change
-```
-
-### Logging and Monitoring
-
-All pipeline activities are logged to `pipeline.log`:
-
-- Documents processed (success/failure counts)
-- SPARQL queries executed
-- Text extraction statistics
-- Export operations
-- Error traces for debugging
-
-### Database Access
-
-Direct SQL access to the complete dataset:
-
-```python
-import sqlite3
-import pandas as pd
-
-conn = sqlite3.connect("output/eulex_build.db")
-
-# Custom query
-query = """
-SELECT w.celex_id, w.title, COUNT(tu.id) as num_articles
-FROM works w
-LEFT JOIN text_units tu ON w.celex_id = tu.celex_id
-WHERE tu.type = 'article'
-GROUP BY w.celex_id
-ORDER BY num_articles DESC
-"""
-
-results = pd.read_sql_query(query, conn)
-print(results.head())
-```
-
-## CELEX ID Format
-
-CELEX (Communitatis Europeae LEX) IDs uniquely identify EU legal documents. Format: `XYYYYXNNNNN`
-
-- **X**: Sector (3 = EU law)
-- **YYYY**: Year
-- **X**: Document type (R = Regulation, L = Directive, D = Decision)
-- **NNNNN**: Sequential number
-
-**Examples:**
-
-- `32016R0679` - Regulation (EU) 2016/679 (GDPR)
-- `31995L0046` - Directive 95/46/EC (Data Protection Directive)
-- `32022D2555` - Decision (EU) 2022/2555
-
-EULEX-BUILD automatically normalizes CELEX IDs and validates their format.
 
 ## Data Source
 
