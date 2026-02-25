@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "eulexbuild"
-version = "0.2.2"
+version = "0.2.3"
 description = "A Python Pipeline for Building Research-Ready Datasets from EU Legislation"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -38,7 +38,8 @@ dependencies = [
     "sqlalchemy>=2.0.0",
     "tqdm>=4.60.0",
     "connectorx>=0.3.0",
-    "polars>=1.38.0"
+    "polars>=1.38.0",
+    "pyarrow>=23.0.0"
 ]
 
 [project.optional-dependencies]
@@ -50,9 +51,9 @@ dev = [
 
 [project.urls]
 Homepage = "https://github.com/sebastianrein/eulex-build"
-Documentation = "https://github.com/sebastianrein/eulex-build/-/blob/main/README.md"
+Documentation = "https://github.com/sebastianrein/eulex-build/blob/main/README.md"
 Repository = "https://github.com/sebastianrein/eulex-build"
-Issues = "https://github.com/sebastianrein/eulex-build/-/issues"
+Issues = "https://github.com/sebastianrein/eulex-build/issues"
 
 [project.scripts]
 eulexbuild = "eulexbuild.cli:main"
